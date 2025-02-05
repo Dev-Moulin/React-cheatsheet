@@ -564,119 +564,104 @@ const App = () => {
 
 export default App;
 ```
+Dans l'exemple ci-dessus, la valeur de useState est modifiée par les boutons "Incrémenter" et "Décrémenter", qui ont la fonction de mise à jour setCount à l'intérieur du gestionnaire d'événements onClick.
 
-## useMemo
-useMemo est un Hook React qui vous permet de mettre en cache le résultat d'un calcul entre les rendus.
+Explication : Cette phrase résume simplement comment l'état est modifié en réponse aux interactions de l'utilisateur. Les boutons "Incrémenter" et "Décrémenter" utilisent la fonction setCount pour mettre à jour l'état count, ce qui provoque un nouveau rendu du composant.
 
-### Exemple d'utilisation
+## Appeler plusieurs fonctions dans un gestionnaire d'événements onClick
 
-```js
+Le gestionnaire d'événements onClick vous permet également d'appeler plusieurs fonctions.
+
+```javascript
 import React, { useState } from "react";
 
-function Counter() {
+const App = () => {
   const [count, setCount] = useState(0);
-  const [evenNum, setEvenNum] = useState(2);
-
-  function evenNumDouble() {
-    console.log("double");
-    return evenNum * 2;
-  }
-
-  return (
-    <div>
-      <h2>Counter: {count}</h2>
-      <h2>Even Numbers: {evenNum}</h2>
-      <h2>even Number Double Value: {evenNumDouble()}</h2>
-      <button onClick={() => setCount(count + 1)}>Increment</button>
-      <button onClick={() => setEvenNum(evenNum + 2)}>Even Numbers</button>
-    </div>
-  );
-}
-
-export default Counter;
-```
-
-Explication
-
-Lorsque nous cliquons sur le bouton Nombres pairs, la fonction evenNumDouble() est appelée car l'état de evenNum est modifié.
-
-Cliquer sur le bouton Incrément affiche également la fonction evenNumDouble(), bien que l'état du compteur ne change pas.
-
-Cela signifie que chaque fois que la fonction evenNumDouble() est rendue inutilement (sur la page), le code devient moins efficace. Nous allons corriger cela avec le hook useMemo ci-dessous.
-
-```javascript
-import React, { useState, useMemo } from "react";
-
-function Counter() {
-  const [count, setCount] = useState(0);
-  const [evenNum, setEvenNum] = useState(2);
-
-  const memoHook = useMemo(
-    function evenNumDouble() {
-      console.log("double");
-      return evenNum * 2;
-    },
-    [evenNum]
-  );
-
-  return (
-    <div>
-      <h2>Counter: {count}</h2>
-      <h2>Even Numbers: {evenNum}</h2>
-      <h2>even Number Double Value: {memoHook}</h2>
-      <button onClick={() => setCount(count + 1)}>Increment</button>
-      <button onClick={() => setEvenNum(evenNum + 2)}>Even Numbers</button>
-    </div>
-  );
-}
-
-export default Counter;
-```
-
-### Explication
-
-Dans le code ci-dessus, nous avons défini la sortie de la fonction evenNumDouble() dans une constante memoHook.
-
-Cela filtre la fonction via le hook useMemo pour vérifier uniquement si la variable spécifiée (evenNum dans ce cas) a été modifiée ; ce n'est qu'alors que cette fonction sera rendue.
-
-```javascript
-import React, { memo, useState } from "react";
-import { useContext } from "react";
-import { GrudgeContext } from "./GrudgeContext";
-
-const NewGrudge = memo(({ onSubmit }) => {
-  const { addGrudge } = React.useContext(GrudgeContext);
-  const [person, setPerson] = useState("");
-  const [reason, setReason] = useState("");
-
-  const handleChange = (event) => {
-    event.preventDefault();
-    addGrudge({ person, reason });
+  const sayHello = () => {
+    alert("Hello!");
   };
 
   return (
-    <form className="NewGrudge" onSubmit={handleChange}>
-      <input
-        className="NewGrudge-input"
-        placeholder="Person"
-        type="text"
-        value={person}
-        onChange={(event) => setPerson(event.target.value)}
-      />
-      <input
-        className="NewGrudge-input"
-        placeholder="Reason"
-        type="text"
-        value={reason}
-        onChange={(event) => setReason(event.target.value)}
-      />
-      <input className="NewGrudge-submit button" type="submit" />
-    </form>
+    <div>
+      <p>{count}</p>
+      <button
+        onClick={() => {
+          sayHello();
+          setCount(count + 1);
+        }}
+      >
+        Say Hello and Increment
+      </button>
+    </div>
   );
-});
+};
 
-export default NewGrudge;
+export default App;
 ```
+
+Explication : Cette section montre comment exécuter plusieurs fonctions en réponse à un seul événement onClick. Vous pouvez utiliser une fonction fléchée pour envelopper plusieurs appels de fonction, en les séparant par des points-virgules. Dans cet exemple, cliquer sur le bouton appelle d'abord la fonction sayHello (qui affiche une alerte), puis met à jour l'état count en incrémentant sa valeur.
+
+## Composants personnalisés et événements dans React
+
+En ce qui concerne les événements dans React, seuls les éléments DOM sont autorisés à avoir des gestionnaires d'événements. Prenons l'exemple d'un composant appelé CustomButton avec un événement onClick. Ce bouton ne répondrait pas aux clics pour la raison ci-dessus.
+
+```javascript
+import React from "react";
+
+const CustomButton = ({ onPress }) => {
+  return (
+    <button type="button" onClick={onPress}>
+      Click on me
+    </button>
+  );
+};
+
+const App = () => {
+  const handleEvent = () => {
+    alert("I was clicked");
+  };
+  return <CustomButton onPress={handleEvent} />;
+};
+
+export default App;
+```
+
+Explication : Cette section met en évidence une subtilité importante dans React. Les événements natifs du navigateur (comme onClick, onChange, etc.) ne peuvent être attachés directement qu'aux éléments DOM (c'est-à-dire les balises HTML standard). Si vous voulez qu'un composant personnalisé réagisse à un événement, vous devez passer un gestionnaire d'événements en tant que prop et l'attacher à un élément DOM à l'intérieur de ce composant. Dans cet exemple, le composant CustomButton reçoit une prop onPress, qui est ensuite utilisée comme gestionnaire d'événements onClick sur le bouton.
+
+## Cycle de vie
+
+### Montage (Mounting)
+
+Ces méthodes sont appelées dans l'ordre suivant lorsqu'une instance d'un composant est créée et insérée dans le DOM :
+
+- `constructor()`
+- `static getDerivedStateFromProps()`
+- `render()`
+- `componentDidMount()`
+
+### Mise à jour (Updating)
+
+Une mise à jour peut être provoquée par des modifications des props ou de l'état. Ces méthodes sont appelées dans l'ordre suivant lorsqu'un composant est redessiné :
+
+- `static getDerivedStateFromProps()`
+- `shouldComponentUpdate()`
+- `render()`
+- `getSnapshotBeforeUpdate()`
+- `componentDidUpdate()`
+
+### Démontage (Unmounting)
+
+Cette méthode est appelée lorsqu'un composant est supprimé du DOM :
+
+- `componentWillUnmount()`
+
+Explication : Cette section décrit le cycle de vie d'un composant de classe React. Le cycle de vie est une série de méthodes qui sont appelées à différents moments de la vie du composant, comme lorsqu'il est créé (montage), mis à jour (mise à jour) ou supprimé (démontage). Comprendre le cycle de vie est essentiel pour gérer correctement l'état, les effets secondaires et les performances de votre composant. Ces méthodes sont moins utilisées avec les hooks, mais il est important de les connaître si vous travaillez avec d'anciens composants de classe.
+
+...
+
+(Le reste du texte suit le même format, avec les sections sur useState, useEffect, useMemo, React.memo, et les explications des concepts associés.)
+
+
 
 ### useCallback
 

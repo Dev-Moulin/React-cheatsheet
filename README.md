@@ -112,7 +112,121 @@ Nous ajouterons ces méthodes aux boutons.
 <button onClick={this.reset}>Réinitialiser</button>
 ```
 
-#### Refactorisation vers les Hooks
+Nous devons lier ces écouteurs d'événements parce que tout est horrible. (Note : Ceci est une blague faisant référence à la complexité de la liaison des méthodes dans les composants de classe React.)
+
+```js
+constructor(props) {
+  super(props);
+  this.state = {
+    count: 3,
+  };
+
+  this.increment = this.increment.bind(this);
+  this.decrement = this.decrement.bind(this);
+  this.reset = this.reset.bind(this);
+}
+```
+
+**Explication** : Dans les composants de classe React, il est nécessaire de lier explicitement les méthodes de la classe au contexte `this` si vous voulez les utiliser comme gestionnaires d'événements. Sinon, `this` sera `undefined` à l'intérieur de la méthode. Cette exigence a été l'une des raisons pour lesquelles les hooks ont été introduits, car ils évitent ce problème. La note entre parenthèses est de l'humour, car la liaison (`bind`) est considérée comme une tâche fastidieuse par beaucoup de développeurs.
+
+---
+
+## Quiz sur l'état des composants
+
+### Mises à jour asynchrones et mise en file d'attente
+
+D'accord, disons que nous avons refactorisé `increment()` comme suit :
+
+```js
+increment() {
+  this.setState({ count: this.state.count + 1 });
+  this.setState({ count: this.state.count + 1 });
+  this.setState({ count: this.state.count + 1 });
+
+  console.log(this.state.count);
+}
+```
+
+Deux questions :
+1. Qu'est-ce qui sera enregistré dans la console ?
+2. Quelle sera la nouvelle valeur ?
+
+**Explication** : `this.setState` est une fonction asynchrone. Cela signifie que les mises à jour de l'état ne sont pas appliquées immédiatement. Au lieu de cela, React met en file d'attente les mises à jour et les applique en lot plus tard. Par conséquent, `console.log(this.state.count)` affichera la valeur avant que les mises à jour ne soient appliquées. La nouvelle valeur, après que les mises à jour en file d'attente ont été traitées, sera `this.state.count + 3`.
+
+---
+
+### Utilisation d'une fonction comme argument
+
+`this.setState` accepte également une fonction. Cela signifie que nous pourrions refactoriser `increment()` comme suit.
+
+```js
+this.setState((state) => {
+  return { count: state.count + 1 };
+});
+```
+
+Si nous voulions nous montrer, nous pourrions utiliser la déstructuration pour rendre cela encore plus propre.
+
+```js
+increment() {
+  this.setState(({ count }) => {
+    return { count: count + 1 };
+  });
+}
+```
+
+Il y a des choses potentiellement cool que nous pourrions faire ici. Par exemple, nous pourrions ajouter une certaine logique à notre composant.
+
+```js
+this.setState((state, props) => {
+  if (state.count >= 10) return;
+  return { count: state.count + 1 };
+});
+```
+
+Disons que nous voulions ajouter un nombre maximum comme "prop".
+
+```js
+render(<Counter max={10} />, document.getElementById("root"));
+this.setState((state) => {
+  if (state.count >= this.props.max) return;
+  return { count: state.count + 1 };
+});
+```
+
+---
+
+## Callbacks
+
+`this.setState` prend un deuxième argument en plus de l'objet ou de la fonction. Cette fonction est appelée après que le changement d'état a eu lieu.
+
+```js
+this.setState(increment, () => console.log("Callback"));
+```
+
+Nous pouvons aussi faire quelque chose comme :
+
+```js
+this.setState(increment, () => console.log(this.state));
+```
+
+Ou mettre à jour le titre du document :
+
+```js
+this.setState(increment, () => (document.title = `Count: ${this.state.count}`));
+```
+
+**Explication** : Le deuxième argument de `setState` est une fonction de callback qui est exécutée une fois que l'état a été mis à jour et que le composant a été redessiné. Ceci est utile pour effectuer des actions qui dépendent de la nouvelle valeur de l'état, comme mettre à jour le titre du document.
+
+---
+
+## Refactorisation vers les Hooks
+
+Les Hooks sont un nouveau modèle qui nous permet d'écrire beaucoup moins de code. Préparez-vous à supprimer du code.
+
+Commençons par supprimer tout sauf la méthode `render`.
+
+
 
 ```javascript
 const Counter = ({ max }) => {

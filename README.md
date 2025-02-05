@@ -276,7 +276,7 @@ this.setState(increment, () => (document.title = `Count: ${this.state.count}`));
 
 **Explication** : Le deuxième argument de `setState` est une fonction de callback qui est exécutée une fois que l'état a été mis à jour et que le composant a été redessiné. Ceci est utile pour effectuer des actions qui dépendent de la nouvelle valeur de l'état, comme mettre à jour le titre du document.
 
-Utilisation de LocalStorage dans un effet secondaire
+## Utilisation de LocalStorage dans un effet secondaire
 
 Créons une petite fonction d'aide.
 

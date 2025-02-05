@@ -653,13 +653,83 @@ Une mise à jour peut être provoquée par des modifications des props ou de l'�
 
 Cette méthode est appelée lorsqu'un composant est supprimé du DOM :
 
-- `componentWillUnmount()`
+componentWillUnmount()
+Use code with caution.
+JavaScript
+Explication : Cette méthode du cycle de vie est appelée juste avant qu'un composant ne soit démonté et supprimé du DOM. C'est l'endroit idéal pour effectuer des opérations de nettoyage, comme annuler des abonnements, supprimer des écouteurs d'événements ou invalider des timers, afin d'éviter des fuites de mémoire et des comportements inattendus.
 
-Explication : Cette section décrit le cycle de vie d'un composant de classe React. Le cycle de vie est une série de méthodes qui sont appelées à différents moments de la vie du composant, comme lorsqu'il est créé (montage), mis à jour (mise à jour) ou supprimé (démontage). Comprendre le cycle de vie est essentiel pour gérer correctement l'état, les effets secondaires et les performances de votre composant. Ces méthodes sont moins utilisées avec les hooks, mais il est important de les connaître si vous travaillez avec d'anciens composants de classe.
+Hooks ;
 
-...
+useState
 
-(Le reste du texte suit le même format, avec les sections sur useState, useEffect, useMemo, React.memo, et les explications des concepts associés.)
+useEffect
+
+useEffect s'exécute à chaque rendu, et par conséquent, les gestionnaires d'événements seront inutilement détachés et rattachés à chaque rendu.
+
+window.React.useEffect(() => {
+  console.log(`adding listener ${count}`);
+  window.addEventListener("click", listener);
+});
+Use code with caution.
+JavaScript
+Explication : Cet exemple montre une utilisation potentiellement inefficace de useEffect. Si le tableau de dépendances est omis ou si les dépendances sont incorrectes, l'effet (ici, l'ajout d'un écouteur d'événements) sera exécuté à chaque rendu, ce qui peut entraîner des problèmes de performance. Il est important de spécifier correctement les dépendances pour que l'effet ne s'exécute que lorsque cela est nécessaire.
+
+componentWillUnmount
+
+Il s'agit du mécanisme de nettoyage facultatif pour les effets. Chaque effet peut renvoyer une fonction qui nettoie après lui. Cela nous permet de garder la logique pour ajouter et supprimer des abonnements à proximité les uns des autres. Ils font partie du même effet ! l'effet secondaire s'exécute après chaque rendu.
+
+window.React.useEffect(() => {
+  return () => {
+    console.log(`removing listener ${count}`);
+    window.removeEventListener("click", listener);
+  };
+});
+Use code with caution.
+JavaScript
+Explication : Cet exemple illustre le modèle de nettoyage approprié avec useEffect. La fonction renvoyée par useEffect est exécutée lors du démontage du composant ou avant la réexécution de l'effet. Elle permet de supprimer l'écouteur d'événements ajouté précédemment, évitant ainsi des fuites de mémoire.
+
+import { useEffect } from "react";
+function RepeatMessage({ message }) {
+  useEffect(() => {
+    const id = setInterval(() => {
+      console.log(message);
+    }, 2000);
+    return () => {
+      clearInterval(id);
+    };
+  }, [message]);
+  return <div>I'm logging to console "{message}"</div>;
+}
+Use code with caution.
+JavaScript
+Explication : Cet exemple montre comment utiliser la fonction de nettoyage pour effacer un intervalle (setInterval). L'intervalle est configuré lorsque le composant est monté et effacé lorsque le composant est démonté ou lorsque la prop message change. Cela évite que l'intervalle ne continue à s'exécuter en arrière-plan après que le composant a été supprimé.
+
+useEffect componentDidMount
+
+l'effet secondaire s'exécute une fois après le rendu initial.
+
+import { useEffect } from "react";
+function Greet() {
+  let name = "Hassan Habib Tahir";
+  const message = `Hello, ${name}!`; // Calculates output
+  useEffect(() => {
+    // Good!
+    document.title = `Greetings to ${name}`; // Side-effect!
+  }, []);
+  return <div>{message}</div>; // Calculates output
+}
+Use code with caution.
+JavaScript
+Explication : Cet exemple montre comment exécuter un effet secondaire une seule fois après le rendu initial en passant un tableau de dépendances vide ([]) à useEffect. Cela est utile pour effectuer des actions de configuration qui ne doivent être exécutées qu'une seule fois, comme définir le titre du document.
+
+callback est la fonction contenant la logique de l'effet secondaire. callback est exécuté juste après que les modifications ont été poussées vers le DOM. dependencies est un tableau facultatif de dépendances. useEffect() exécute callback uniquement si les dépendances ont changé entre les rendus.
+
+useEffect(callback[, dependencies]);
+Use code with caution.
+JavaScript
+Explication : Ceci résume la syntaxe de useEffect : callback est la fonction à exécuter (l'effet secondaire), et dependencies est un tableau de valeurs à surveiller. L'effet ne s'exécute que si l'une de ces valeurs change.
+
+
 
 
 

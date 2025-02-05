@@ -193,6 +193,64 @@ this.setState((state) => {
   return { count: state.count + 1 };
 });
 ```
+Il s'avère que nous pouvons aussi avoir un deuxième argument : les props.
+
+```js
+this.setState((state, props) => {
+  if (state.count >= props.max) return;
+  return { count: state.count + 1 };
+});
+```
+
+> **Explication** : Cette partie souligne que la fonction passée à `setState` peut accepter deux arguments : l'état actuel (`state`) et les props du composant (`props`). Cela vous donne la possibilité d'utiliser les props pour déterminer comment l'état doit être mis à jour. Dans cet exemple, la prop `max` est utilisée pour limiter la valeur maximale du compteur.
+
+---
+
+Oh attendez, et si nous faisions cela trois fois ?
+
+```js
+increment() {
+  this.setState((state, props) => {
+    if (state.count >= props.max) return;
+    return { count: state.count + 1 };
+  });
+  this.setState((state, props) => {
+    if (state.count >= props.max) return;
+    return { count: state.count + 1 };
+  });
+  this.setState((state, props) => {
+    if (state.count >= props.max) return;
+    return { count: state.count + 1 };
+  });
+}
+```
+
+> **Explication** : Cette section pose une question intéressante sur le comportement de `setState` lorsqu'il est appelé plusieurs fois de suite. Comme `setState` est asynchrone, React peut regrouper plusieurs appels à `setState` en une seule mise à jour pour améliorer les performances. Cependant, lorsque vous utilisez une fonction comme argument de `setState`, React garantit que chaque fonction reçoit la valeur la plus récente de l'état. Dans cet exemple, même si `setState` est appelé trois fois, chaque fonction recevra la valeur correcte de `state.count` et la mise à jour sera appliquée correctement (tant que `state.count` ne dépasse pas `props.max`). Le résultat est que le compteur ne sera incrémenté qu'une seule fois, car les appels suivants à `setState` ne feront rien une fois que `state.count` aura atteint `props.max`.
+
+---
+
+L'autre chose que nous pouvons faire est de sortir cette fonction du composant. Cela rend les tests unitaires beaucoup plus faciles.
+
+```js
+const increment = (state, props) => {
+  if (state.count >= props.max) return;
+  return { count: state.count + 1 };
+};
+
+increment() {
+  this.setState(increment);
+}
+```
+
+> **Explication** : Comme mentionné précédemment, sortir la fonction de mise à jour de l'état du composant améliore la modularité et la testabilité du code. La fonction `increment` peut maintenant être testée indépendamment du composant.
+
+---
+
+### En résumé :
+
+- La fonction passée à `setState` peut accéder à la fois à l'état actuel et aux `props` du composant.
+- React garantit que la fonction reçoit la valeur la plus récente de l'état, même si `setState` est appelé plusieurs fois de suite.
+- Sortir la fonction de mise à jour de l'état du composant améliore la modularité et la testabilité du code.
 
 ---
 

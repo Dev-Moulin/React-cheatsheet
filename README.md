@@ -276,6 +276,97 @@ this.setState(increment, () => (document.title = `Count: ${this.state.count}`));
 
 **Explication** : Le deuxième argument de `setState` est une fonction de callback qui est exécutée une fois que l'état a été mis à jour et que le composant a été redessiné. Ceci est utile pour effectuer des actions qui dépendent de la nouvelle valeur de l'état, comme mettre à jour le titre du document.
 
+Utilisation de LocalStorage dans un effet secondaire
+
+Créons une petite fonction d'aide.
+
+```js
+const getStateFromLocalStorage = () => {
+  const storage = localStorage.getItem("counterState");
+  if (storage) return JSON.parse(storage);
+  return { count: 0 };
+};
+```
+
+Explication : Cette fonction, `getStateFromLocalStorage`, a pour but de récupérer l'état du compteur (s'il existe) depuis le `localStorage` du navigateur. Si une valeur est trouvée sous la clé "counterState", elle est analysée (`parse`) en tant qu'objet JSON et renvoyée. Si aucune valeur n'est trouvée, elle renvoie un objet par défaut `{ count: 0 }`. Ceci est utile pour initialiser l'état du composant avec la dernière valeur persistée.
+
+Nous pouvons ensuite utiliser un callback pour définir `localStorage` lorsque l'état change.
+
+```js
+this.setState(increment, () =>
+  localStorage.setItem("counterState", JSON.stringify(this.state))
+);
+```
+
+Sortons cela avec "increment".
+
+```js
+const storeStateInLocalStorage = () => {
+  localStorage.setItem("counterState", JSON.stringify(this.state));
+};
+
+increment() {
+  this.setState(increment, storeStateInLocalStorage);
+}
+```
+
+Ça ne marche pas. C'est dommage. Il serait formidable que la fonction de callback reçoive une copie de l'état, mais ce n'est pas le cas. Nous pourrions l'envelopper dans une fonction, puis transmettre l'état.
+
+Explication : Cette partie souligne un défi lors de l'utilisation des callbacks avec `setState`. La fonction `storeStateInLocalStorage` ne fonctionne pas directement car elle utilise `this.state`, qui peut ne pas refléter la nouvelle valeur de l'état au moment où le callback est exécuté. C'est parce que `setState` est asynchrone, et l'état n'est pas garanti d'être mis à jour immédiatement.
+
+Nous pourrions gérer cela de plusieurs façons.
+
+Nous pourrions utiliser une fonction anonyme, puis la transmettre comme argument.
+
+```js
+const storeStateInLocalStorage = (state) => {
+  localStorage.setItem("counterState", JSON.stringify(state));
+};
+
+increment() {
+  this.setState(increment, () => storeStateInLocalStorage(this.state));
+}
+```
+
+Alternativement, si nous sommes prêts à renoncer aux fonctions fléchées, nous pouvons utiliser `bind`.
+
+```js
+function storeStateInLocalStorage() {
+  localStorage.setItem("counterState", JSON.stringify(this.state));
+}
+
+increment() {
+  this.setState(increment, storeStateInLocalStorage.bind(this));
+}
+```
+
+Enfin, nous pouvons simplement le mettre sur le composant de classe lui-même.
+
+```js
+storeStateInLocalStorage() {
+  localStorage.setItem('counterState', JSON.stringify(this.state));
+}
+
+increment() {
+  this.setState(increment, this.storeStateInLocalStorage);
+}
+```
+
+C'est probablement votre meilleure option.
+
+Explication : Cette section présente différentes solutions pour accéder à la nouvelle valeur de l'état à l'intérieur du callback de `setState`.
+
+- **Fonction anonyme** : Utiliser une fonction anonyme `() => storeStateInLocalStorage(this.state)` permet de capturer la valeur de `this.state` au moment où le callback est exécuté.
+- **bind** : Utiliser `storeStateInLocalStorage.bind(this)` permet de forcer `this` à faire référence au composant, ce qui permet d'accéder à la nouvelle valeur de l'état.
+- **Méthode de classe** : Définir `storeStateInLocalStorage` comme une méthode de classe (avec la syntaxe `storeStateInLocalStorage() { ... }`) est généralement la meilleure option car elle garantit que `this` se réfère toujours au composant et permet d'accéder à la nouvelle valeur de l'état.
+
+### En résumé :
+
+- Il est important de comprendre que `setState` est asynchrone et que l'état n'est pas garanti d'être mis à jour immédiatement.
+- Lors de l'utilisation des callbacks avec `setState`, il est nécessaire de s'assurer que vous avez accès à la nouvelle valeur de l'état.
+- Définir les fonctions qui dépendent de l'état comme des méthodes de classe est généralement la meilleure approche.
+
+
 ---
 
 ## Refactorisation vers les Hooks

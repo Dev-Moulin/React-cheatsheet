@@ -780,9 +780,8 @@ export default NewGrudge;
 ```
 Explication : Cet exemple utilise React.memo pour mémoïser un composant fonctionnel.
 
-### useCallback
-
-useCallback est un hook React qui vous permet de mettre en cache la définition d'une fonction entre les rendus.
+## useCallback 
+useCallback est un Hook React qui vous permet de mettre en cache une définition de fonction entre les rendus.  Cela est particulièrement utile pour optimiser les performances en évitant de recréer la fonction à chaque rendu, surtout si cette fonction est passée comme prop à un composant enfant qui utilise `React.memo`.
 
 ```javascript
 const [grudges, dispatch] = useReducer(reducer, initialState);
@@ -800,23 +799,31 @@ const addGrudge = useCallback(
 );
 ```
 
-### useRef
+Dans cet exemple, addGrudge ne sera recréée que si dispatch change. C'est crucial car si addGrudge était recréée à chaque rendu du composant parent, même si les props ne changeaient pas, le composant enfant, si optimisé avec React.memo, serait quand même rendu inutilement.
 
-useRef est un Hook React qui vous permet de référencer une valeur qui n'est pas nécessaire pour le rendu.
+## useRef
+
+`useRef` est un Hook React qui vous permet de référencer une valeur qui n'est pas nécessaire pour le rendu. Il est principalement utilisé pour créer une variable mutable qui ne provoque pas de re-rendu des composants lorsqu'elle est modifiée. Cela le rend idéal pour stocker des valeurs qui persistent entre les rendus sans affecter l'interface utilisateur.
 
 ```javascript
 import { useRef } from "react";
+
 function MyComponent() {
   const reference = useRef(initialValue);
   const someHandler = () => {
+    // Accéder à la valeur de la référence:
     const value = reference.current;
+    // Mettre à jour la valeur de la référence:
     reference.current = newValue;
   };
 }
 ```
 
+Mettre à jour une référence ne déclenche pas de re-rendu du composant.
+
 ```javascript
 import { useRef } from "react";
+
 function LogButtonClicks() {
   const countRef = useRef(0);
 
@@ -829,94 +836,58 @@ function LogButtonClicks() {
 }
 ```
 
-### useLayoutEffect
+### Accéder aux éléments DOM
+
+`useRef` est également couramment utilisé pour accéder directement aux éléments DOM.
+
+```javascript
+import { useRef, useEffect } from "react";
+
+function AccessingElement() {
+  const elementRef = useRef();
+
+  useEffect(() => {
+    const divElement = elementRef.current;
+    console.log(divElement); // affiche <div>Je suis un élément</div>
+  }, []);
+
+  return <div ref={elementRef}>Je suis un élément</div>;
+}
+```
+
+Ici, `elementRef` est passé comme attribut `ref` à un élément div. Dans le `useEffect`, on peut accéder à l'élément DOM réel via `elementRef.current`. Notez que `useEffect` est utilisé pour s'assurer que l'élément est disponible dans le DOM avant d'y accéder.
+
+## useLayoutEffect
+
+Le hook `useEffect` s'exécute de manière asynchrone, tandis que le hook `useLayoutEffect` fonctionne de manière synchrone. `useLayoutEffect` est utile lorsque vous devez effectuer des mesures du DOM (comme obtenir la position de défilement ou d'autres styles pour un élément) et ensuite apporter des modifications au DOM ou déclencher un re-rendu synchrone en mettant à jour l'état.
 
 ```javascript
 import React, { useLayoutEffect } from "react";
+
 const APP = (props) => {
   useLayoutEffect(() => {
+    // Faire quelque chose et soit retourner undefined, soit une fonction de nettoyage
     return () => {
-      // Cleanup
+      // Faire un nettoyage ici
     };
   }, [dependencies]);
 };
 ```
 
-### Style de votre application React
+Il est important de noter que `useLayoutEffect` doit être utilisé avec prudence car il peut bloquer le navigateur et affecter les performances s'il contient des opérations coûteuses. Dans la plupart des cas, `useEffect` est suffisant.
 
-#### Styles en ligne
-
-```javascript
-export default function App() {
-  return (
-    <section
-      style={{
-        fontFamily: "-apple-system",
-        fontSize: "1rem",
-        fontWeight: 1.5,
-        lineHeight: 1.5,
-        color: "#292b2c",
-        backgroundColor: "#fff",
-        padding: "0 2em",
-      }}
-    >
-      <div
-        style={{
-          textAlign: "center",
-          maxWidth: "950px",
-          margin: "0 auto",
-          border: "1px solid #e6e6e6",
-          padding: "40px 25px",
-          marginTop: "50px",
-        }}
-      >
-        <img
-          src="https://randomuser.me/api/portraits/women/48.jpg"
-          alt="Tammy Stevens"
-          style={{
-            margin: "-90px auto 30px",
-            width: "100px",
-            borderRadius: "50%",
-            objectFit: "cover",
-            marginBottom: "0",
-          }}
-        />
-        <div>
-          <p
-            style={{
-              lineHeight: 1.5,
-              fontWeight: 300,
-              marginBottom: "25px",
-              fontSize: "1.375rem",
-            }}
-          >
-            This is one of the best developer blogs on the planet! I read it
-            daily to improve my skills.
-          </p>
-        </div>
-        <p
-          style={{
-            marginBottom: "0",
-            fontWeight: 600,
-            fontSize: "1rem",
-          }}
-        >
-          Tammy Stevens
-          <span style={{ fontWeight: 400 }}> · Front End Developer</span>
-        </p>
-      </div>
-    </section>
-  );
-}
-```
+## Styliser votre application React
 
 ### CSS simple
+
+Au lieu d'utiliser des styles en ligne, il est courant d'importer une feuille de style CSS pour styliser les éléments d'un composant.
 
 ```css
 /* src/styles.css */
 
 body {
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   margin: 0;
   font-size: 1rem;
   font-weight: 1.5;
@@ -924,10 +895,390 @@ body {
   color: #292b2c;
   background-color: #fff;
 }
-.testimonial {
-  margin: 0 auto;
-  padding: 0 2em;
+```
+
+### CSS-in-JS
+
+Les librairies CSS-in-JS permettent d'écrire du CSS directement dans les composants JavaScript.
+
+```javascript
+import styled from "styled-components";
+
+const Button = styled.button`
+  color: limegreen;
+  border: 2px solid limegreen;
+  font-size: 1em;
+  margin: 1em;
+  padding: 0.25em 1em;
+  border-radius: 3px;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
+export default function App() {
+  return (
+    <div>
+      <Button>Cliquez-moi</Button>
+    </div>
+  );
 }
 ```
 
+## Utiliser un Reducer
 
+On pourrait essayer d'être intelligent ici avec `useCallback` et `React.memo`, mais comme nous remplaçons toujours le tableau des rancunes, cela ne va jamais vraiment fonctionner.
+
+```javascript
+const reducer = (state = [], action) => {
+  return state;
+};
+```
+
+Et puis nous remplaçons ce `useState` par un `useReducer`.
+
+```javascript
+const [grudges, dispatch] = useReducer(reducer, initialState);
+```
+
+# L'API Context de React: Gestion d'état global simplifiée
+
+## Qu'est-ce que l'API Context?
+
+L'API Context de React est une méthode permettant à une application React de produire efficacement des variables globales qui peuvent être transmises. C'est l'alternative au "prop drilling" ou au déplacement de props du grand-parent à l'enfant en passant par le parent, et ainsi de suite. L'exemple ci-dessus n'était pas si mauvais. Mais, vous pouvez voir comment cela pourrait devenir un peu hors de contrôle à mesure que notre application grandit.
+
+Que faire si deux composants cousins très éloignés avaient besoin des mêmes données?
+
+Les builds modernes de React vous permettent d'utiliser quelque chose appelé l'API Context pour améliorer cela. C'est essentiellement un moyen pour des parties très différentes de votre application de communiquer entre elles.
+
+Nous allons extraire beaucoup de code de `Application.js` et le déplacer vers un nouveau fichier appelé `GrudgeContext.js` et cela ressemblera à quelque chose comme ceci.
+
+```javascript
+import React, { useReducer, createContext, useCallback } from "react";
+import initialState from "./initialState";
+import id from "uuid/v4";
+
+export const GrudgeContext = createContext();
+
+const GRUDGE_ADD = "GRUDGE_ADD";
+const GRUDGE_FORGIVE = "GRUDGE_FORGIVE";
+
+const reducer = (state = [], action) => {
+  if (action.type === GRUDGE_ADD) {
+    return [
+      {
+        id: id(),
+        ...action.payload,
+      },
+      ...state,
+    ];
+  }
+
+  if (action.type === GRUDGE_FORGIVE) {
+    return state.map((grudge) => {
+      if (grudge.id === action.payload.id) {
+        return { ...grudge, forgiven: !grudge.forgiven };
+      }
+      return grudge;
+    });
+  }
+
+  return state;
+};
+
+export const GrudgeProvider = ({ children }) => {
+  const [grudges, dispatch] = useReducer(reducer, initialState);
+
+  const addGrudge = useCallback(
+    ({ person, reason }) => {
+      dispatch({
+        type: GRUDGE_ADD,
+        payload: {
+          person,
+          reason,
+        },
+      });
+    },
+    [dispatch]
+  );
+
+  const toggleForgiveness = useCallback(
+    (id) => {
+      dispatch({
+        type: GRUDGE_FORGIVE,
+        payload: {
+          id,
+        },
+      });
+    },
+    [dispatch]
+  );
+
+  return (
+    <GrudgeContext.Provider value={{ grudges, addGrudge, toggleForgiveness }}>
+      {children}
+    </GrudgeContext.Provider>
+  );
+};
+```
+
+Ici, nous créons un Context appelé GrudgeContext et un Provider appelé GrudgeProvider. Le Provider gère l'état des rancunes et les actions pour ajouter et pardonner des rancunes. Il expose ensuite ces valeurs à tous les composants enfants enveloppés par le Provider.
+
+Maintenant, `Application.js` a l'air beaucoup plus allégé.
+
+```javascript
+import React from "react";
+import Grudges from "./Grudges";
+import NewGrudge from "./NewGrudge";
+
+const Application = () => {
+  return (
+    <div className="Application">
+      <NewGrudge />
+      <Grudges />
+    </div>
+  );
+};
+
+export default Application;
+```
+
+### Envelopper l'application dans votre nouveau Provider
+
+```javascript
+ReactDOM.render(
+  <GrudgeProvider>
+    <Application />
+  </GrudgeProvider>,
+  rootElement
+);
+```
+
+Cela fonctionne et c'est cool, mais cela manque toujours l'essentiel. L'intérêt principal du Context est de simplifier le partage d'état entre composants, ce qui rend le code plus propre et plus maintenable.
+
+### Connecter l'API Context
+
+```javascript
+import React from "react";
+import Grudge from "./Grudge";
+import { GrudgeContext } from "./GrudgeContext";
+
+const Grudges = () => {
+  const { grudges } = React.useContext(GrudgeContext);
+
+  return (
+    <section className="Grudges">
+      <h2>Grudges ({grudges.length})</h2>
+      {grudges.map((grudge) => (
+        <Grudge key={grudge.id} grudge={grudge} />
+      ))}
+    </section>
+  );
+};
+
+export default Grudges;
+```
+
+### Rancunes individuelles
+
+```javascript
+import React from "react";
+import { GrudgeContext } from "./GrudgeContext";
+
+const Grudge = ({ grudge }) => {
+  const { toggleForgiveness } = React.useContext(GrudgeContext);
+
+  return (
+    <article className="Grudge">
+      <h3>{grudge.person}</h3>
+      <p>{grudge.reason}</p>
+      <div className="Grudge-controls">
+        <label className="Grudge-forgiven">
+          <input
+            type="checkbox"
+            checked={grudge.forgiven}
+            onChange={() => toggleForgiveness(grudge.id)}
+          />{" "}
+          Pardonné
+        </label>
+      </div>
+    </article>
+  );
+};
+
+export default Grudge;
+```
+
+L'API Context, combinée avec les reducers, offre une solution puissante pour gérer l'état global dans les applications React. Elle permet d'éviter le "prop drilling" et de rendre le code plus propre, plus maintenable et plus facile à comprendre.
+
+# Pourquoi Redux?
+
+Le transfert d'état entre les composants est assez désordonné dans React, car il est difficile de suivre de quel composant proviennent les données. Cela devient vraiment compliqué si les utilisateurs travaillent avec un grand nombre d'états dans une application. Redux Redux résout le problème du transfert d'état en stockant tous les états dans un seul endroit appelé un store. Ainsi, la gestion et le transfert des états deviennent plus faciles car tous les états sont stockés dans le même store pratique. Chaque composant de l'application peut alors accéder directement à l'état requis à partir de ce store.  Redux centralise la gestion de l'état, simplifiant ainsi la communication entre les composants et la logique de mise à jour de l'état.
+
+## Qu'est-ce que Redux?
+
+Redux est un conteneur d'état prévisible pour les applications JavaScript. Il vous aide à écrire des applications qui se comportent de manière cohérente, s'exécutent dans différents environnements (client, serveur et natif) et sont faciles à tester. Redux gère l'état d'une application avec un seul objet global appelé Store.
+
+## Piliers de Redux
+
+Voici les principaux piliers de Redux:
+
+### Store:
+
+Un store est un objet qui contient l'arborescence d'état de l'application. Il ne devrait y avoir qu'un seul store dans une application Redux, car la composition se produit au niveau du reducer. `getState()` renvoie l'état actuel du store. Le store est le centre névralgique de Redux, contenant l'état global de l'application.
+
+### dispatch()
+
+`dispatch()` distribue une action. C'est la seule façon de mettre à jour l'état de l'application.
+
+```javascript
+() => dispatch({ msg: "ADD_SOMETHING" });
+```
+
+`dispatch()` est la fonction utilisée pour envoyer des actions au store.
+
+### subscribe()
+
+`subscribe()` abonne un écouteur de changement à l'état. `unsubscribe()` est utile lorsque vous ne voulez plus appeler votre méthode d'écouteur lorsque l'état change. `subscribe()` permet de réagir aux changements d'état dans le store.
+
+### Actions:
+
+Une action est un simple objet qui représente une intention de modifier l'état. Elles doivent avoir une propriété pour indiquer le type d'action à effectuer.
+
+Les actions sont des payloads d'informations qui envoient des données de votre application à votre store.
+
+Toutes les données, qu'elles proviennent d'événements d'interface utilisateur ou de callbacks réseau, doivent éventuellement être dispatchées en tant qu'actions.
+
+Les actions doivent avoir un champ `type`, indiquant le type d'action à effectuer.
+
+Les actions sont des objets qui décrivent une intention de modifier l'état. Elles contiennent un champ `type` qui identifie l'action à effectuer et, éventuellement, des données supplémentaires (payload).
+
+### Reducers:
+
+Les reducers sont des fonctions pures qui spécifient comment l'état de l'application change en réponse aux actions envoyées au store.
+
+Les actions décrivent seulement ce qui s'est passé, pas comment l'état de l'application change.
+
+Un reducer est une fonction qui accepte l'état courant et l'action, et renvoie un nouvel état avec l'action effectuée.
+
+L'utilitaire `combineReducers()` peut être utilisé pour combiner tous les reducers de l'application en un seul reducer d'index, ce qui facilite grandement la maintenabilité.
+
+Les reducers sont des fonctions qui prennent l'état courant et une action et renvoient un nouvel état. Ils sont responsables de la logique de mise à jour de l'état.
+
+## Application Web avec Redux
+
+### Créer le Store
+
+Créez un store dans le fichier `index.js`
+
+```javascript
+import { createStore } from "redux";
+import { composeWithDevTools } from "redux-devtools-extension";
+import rootReducer from "./rootReducer";
+
+const store = createStore(rootReducer, composeWithDevTools());
+
+export default store;
+```
+
+### Main
+
+```javascript
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import App from "./App";
+import { Provider } from "react-redux";
+import store from "./redux/store";
+
+ReactDOM.render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </React.StrictMode>,
+  document.getElementById("root")
+);
+```
+
+Le composant `Provider` rend le store Redux disponible pour tous les composants connectés dans l'application.
+
+### Reducer
+
+```javascript
+import { combineReducers } from "redux";
+import {
+  GET_ALL_PRODUCT,
+  GET_NUMBER_CART,
+  ADD_CART,
+  DECREASE_QUANTITY,
+  INCREASE_QUANTITY,
+  DELETE_CART,
+} from "./types";
+
+const initProduct = {
+  numberCart: 0,
+  Carts: [],
+  _products: [],
+};
+
+function todoProduct(state = initProduct, action) {
+  switch (action.type) {
+    case GET_ALL_PRODUCT:
+      return {
+        ...state,
+        _products: action.payload,
+      };
+    case ADD_CART:
+      if (state.numberCart === 0) {
+        let cart = {
+          id: action.payload.id,
+          quantity: 1,
+          name: action.payload.name,
+          image: action.payload.image,
+          price: action.payload.price,
+        };
+        state.Carts.push(cart);
+      } else {
+        let check = false;
+        state.Carts.forEach((item, key) => {
+          if (item.id === action.payload.id) {
+            state.Carts[key].quantity++;
+            check = true;
+          }
+        });
+        if (!check) {
+          let _cart = {
+            id: action.payload.id,
+            quantity: 1,
+            name: action.payload.name,
+            image: action.payload.image,
+            price: action.payload.price,
+          };
+          state.Carts.push(_cart);
+        }
+      }
+      return {
+        ...state,
+        numberCart: state.numberCart + 1,
+      };
+    default:
+      return state;
+  }
+}
+
+const ShopApp = combineReducers({
+  _todoProduct: todoProduct,
+});
+
+export default ShopApp;
+```
+
+## Différence entre Context API et Redux
+
+Dans Redux, vous pouvez définir les données dans un composant et d'autres composants ont le droit d'y accéder. D'autre part, Context les traite tels qu'ils se produisent au niveau du composant. Redux est plus adapté aux applications avec un état complexe et global, tandis que Context API est plus simple et peut être utilisé pour des cas d'utilisation plus limités.
+
+## Différence entre Context API et Props
+
+Les props fonctionnent avec une seule direction principale, les données sont partagées dans un seul composant, l'API context permet de partager des données avec plusieurs composants. Les props sont utilisées pour transmettre des données directement d'un parent à un enfant, tandis que Context API permet de partager des données entre des composants éloignés sans devoir passer les props manuellement à chaque niveau.
